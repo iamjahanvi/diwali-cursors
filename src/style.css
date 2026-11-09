@@ -46,11 +46,12 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 
 /* ---------------- gallery ---------------- */
 #gallery { padding: clamp(40px, 8vw, 96px) var(--gutter) 64px; max-width: 1360px; margin: 0 auto; }
-.masthead { text-align: center; max-width: 720px; margin: 0 auto clamp(40px, 6vw, 72px); }
+.masthead { text-align: center; max-width: 1000px; margin: 0 auto clamp(40px, 6vw, 72px); }
 .masthead h1 {
-  font: 500 clamp(48px, 8.5vw, 104px)/0.95 var(--serif); letter-spacing: -0.02em; margin: 0;
+  font: 700 clamp(52px, 9vw, 116px)/0.92 var(--serif); letter-spacing: -0.03em; margin: 0;
+  text-wrap: balance;
 }
-.masthead h1 em { font-style: italic; color: var(--accent); }
+.masthead h1 em { font-style: italic; font-weight: 700; color: var(--accent); }
 .lede {
   font: italic 500 clamp(19px, 2.2vw, 24px)/1.4 var(--serif); color: var(--muted);
   margin: 22px auto 0; max-width: 44ch; text-wrap: balance;
