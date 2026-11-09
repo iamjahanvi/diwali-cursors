@@ -42,7 +42,7 @@ grid.innerHTML = CARDS.map((c) => `
   <li>
     <a class="pc" href="#/${c.id}" data-id="${c.id}" aria-label="Choose ${c.title}">
       <span class="pc-frame"><img src="${c.thumb}" alt="" width="640" height="360" loading="lazy" decoding="async"></span>
-      <span class="pc-cap"><span class="pc-no">No. ${c.no}</span> ${c.title}</span>
+      <span class="pc-cap"><span class="pc-no">${c.no}</span> ${c.title}</span>
     </a>
   </li>`).join('');
 
@@ -95,7 +95,7 @@ async function openEditor(card) {
   draft.card = card;
   if (!sameCard) { draft.posted = false; draft.img = null; }
   $('#cardTitle').textContent = card.title;
-  $('#cardNo').textContent = `No. ${card.no}`;
+  $('#cardNo').textContent = card.no;
   show('editor');
   window.scrollTo(0, 0);
   updatePosted(false);

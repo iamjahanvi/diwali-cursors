@@ -217,7 +217,7 @@ export function drawBack(canvas, s) {
 
   // footer caption
   ctx.fillStyle = MUTED; ctx.font = `500 19px ${SANS}`;
-  spaced(ctx, `NO. ${s.card.no}  ·  ${s.card.title.toUpperCase()}`, L, 1070, 3.2);
+  spaced(ctx, `${s.card.no}  ·  ${s.card.title.toUpperCase()}`, L, 1070, 3.2);
 
   // ---- right: stamp, address ----
   const SW = 236, SH = 286, SX = BACK_W - 120 - SW, SY = 104;
