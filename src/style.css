@@ -52,7 +52,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
   margin: 0 0 clamp(56px, 7vw, 96px);
 }
 .masthead h1 {
-  font: 700 clamp(52px, 8vw, 112px)/0.92 var(--serif); letter-spacing: -0.03em; margin: 0;
+  font: 700 clamp(44px, 6.6vw, 92px)/0.94 var(--serif); letter-spacing: -0.03em; margin: 0;
 }
 .masthead h1 em { font-style: italic; font-weight: 700; color: var(--accent); }
 .lede {
