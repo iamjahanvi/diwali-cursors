@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",
-    "@fontsource/gloock": "^5.3.0",
     "@fontsource/instrument-sans": "^5.3.0",
+    "@fontsource/parisienne": "^5.3.0",
     "three": "^0.187.0"
   },
   "devDependencies": {
