@@ -7,7 +7,7 @@ import '@fontsource/cormorant-garamond/700-italic.css';
 import '@fontsource/instrument-sans/400.css';
 import '@fontsource/instrument-sans/500.css';
 import '@fontsource/instrument-sans/600.css';
-import '@fontsource/gloock/400.css';
+import '@fontsource/shippori-mincho-b1/latin-700.css';
 import './style.css';
 import { CARDS, byId } from './cards.js';
 import { PostcardScene } from './postcard.js';

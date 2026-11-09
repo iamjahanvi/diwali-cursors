@@ -52,7 +52,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
   margin: 0 0 clamp(80px, 11vw, 160px);
 }
 .masthead h1 {
-  font: 400 clamp(42px, 6.2vw, 86px)/1 "Gloock", var(--serif); letter-spacing: -0.015em; margin: 0;
+  font: 700 clamp(42px, 6vw, 84px)/1.08 "Shippori Mincho B1", var(--serif); letter-spacing: -0.02em; margin: 0;
 }
 .masthead h1 em { font-style: normal; color: var(--accent); }
 .lede {
