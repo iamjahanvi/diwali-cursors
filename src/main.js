@@ -11,7 +11,7 @@ import '@fontsource/shippori-mincho-b1/latin-700.css';
 import './style.css';
 import { CARDS, byId } from './cards.js';
 import { PostcardScene } from './postcard.js';
-import { drawBack, loadBackFonts } from './back.js';
+import { drawBack, loadBackFonts, fitMessage, BACK_W, MSG, SIG, TO } from './back.js';
 import { encodeCard, decodeCard, shareUrl } from './share.js';
 
 const $ = (s) => document.querySelector(s);
@@ -65,7 +65,8 @@ let autoFlipTimer = 0;
 function show(name) {
   for (const [k, el] of Object.entries(screens)) el.hidden = k !== name;
   document.body.dataset.screen = name;
-  if (scene) scene.interactive = name !== 'gallery';
+  if (scene) { scene.interactive = name !== 'gallery'; scene.calm = name === 'editor'; }
+  if (name !== 'editor') setInk(false);
 }
 
 function paintBack(state, placeholders) {
@@ -85,10 +86,15 @@ async function setArt(card) {
 
 // ---------- editor ----------
 const f = { to: $('#to'), msg: $('#msg'), from: $('#from') };
-const counter = $('#count');
+const ink = $('#ink');
+const sig = ink.querySelector('.sig');
+const hint = $('#hint');
 const postBtn = $('#postBtn');
 const shareBox = $('#shareBox');
 const linkField = $('#link');
+const coarse = matchMedia('(pointer: coarse)').matches;
+let inkOn = false;
+let exporting = false;
 
 async function openEditor(card) {
   const sameCard = draft.card === card;
@@ -102,29 +108,89 @@ async function openEditor(card) {
   updatePosted(false);
   await fontsReady;
   if (!scene) return;
-  scene.follow($('#stage'), innerWidth < 560 ? 0.05 : 0.14);
+  scene.follow($('#stage'), innerWidth < 560 ? 0.02 : 0.1);
   if (flightFrom?.id === card.id) scene.placeOver(flightFrom.rect);
   else scene.arrive();
   flightFrom = null;
   scene.theta.snap(0);
   draft.img = await loadImage(card.thumb);
   paintBack(draft, true);
-  setArt(card).then((full) => { draft.img = full; paintBack(draft, true); });
+  setArt(card).then((full) => { draft.img = full; repaint(); });
 }
 
-let paintQueued = false;
+// Phones zoom into text fields smaller than 16px, so never let the ink get smaller than that on screen.
+const minInk = (k) => (coarse ? 16 / k : 0);
+
+function repaint() {
+  if (!draft.card) return;
+  const k = scene ? scene.screenRect().w / BACK_W : 1;
+  paintBack({ ...draft, hideText: inkOn, minSize: minInk(k) }, true);
+}
+
+function setInk(on) {
+  if (on === inkOn) return;
+  inkOn = on;
+  ink.hidden = !on;
+  if (on) { placeInk(); if (!coarse && !draft.msg) f.msg.focus({ preventScroll: true }); }
+  else document.activeElement?.blur?.();
+  repaint();
+}
+
+/** Lay the live inputs exactly over the back of the card, scaled to its size on screen. */
+function placeInk() {
+  const r = scene.screenRect();
+  const k = r.w / BACK_W;
+  ink.style.left = r.x + 'px'; ink.style.top = r.y + 'px';
+  ink.style.width = r.w + 'px'; ink.style.height = r.h + 'px';
+
+  const { size } = fitMessage(draft.msg.trim() || 'x', minInk(k));
+  const px = (v) => v * k + 'px';
+  Object.assign(f.msg.style, {
+    left: px(MSG.left), top: px(MSG.top + size * 0.02), width: px(MSG.right - MSG.left),
+    height: px(MSG.bottom - MSG.top), fontSize: px(size),
+  });
+  const sigSize = Math.max(SIG.size, minInk(k));
+  Object.assign(sig.style, {
+    left: px(MSG.left), width: px(MSG.right - MSG.left), top: px(SIG.baseline - sigSize * 0.98), fontSize: px(sigSize),
+  });
+  f.from.style.fontSize = px(sigSize);
+  f.from.style.width = Math.max(measure(f.from.value || f.from.placeholder, sigSize) + 4, 40) * k + 'px';
+  const toSize = Math.max(TO.size, minInk(k));
+  Object.assign(f.to.style, {
+    left: px(TO.left), top: px(TO.baseline - toSize * 0.98), width: px(TO.right - TO.left), fontSize: px(toSize),
+  });
+}
+
+let measureCtx;
+function measure(text, size) {
+  measureCtx ||= document.createElement('canvas').getContext('2d');
+  measureCtx.font = `italic 600 ${size}px "Cormorant Garamond", Georgia, serif`;
+  return measureCtx.measureText(text).width;
+}
+
+// keep the ink glued to the card; show it only while the back lies still
+(function track() {
+  requestAnimationFrame(track);
+  if (!scene || document.body.dataset.screen !== 'editor' || exporting || window.__ink?.hold) return;
+  const on = scene.settledOn('back');
+  if (on !== inkOn) setInk(on);
+  else if (on) placeInk();
+  hint.textContent = scene.side === 'back'
+    ? 'Write right on the card. Tap the card or “Turn over” to see the art.'
+    : 'Tap the card to turn it over and write on the back.';
+})();
+
+if (new URLSearchParams(location.search).has('debug')) window.__ink = { setInk, get on() { return inkOn; } };
+
 function onInput() {
   draft.to = f.to.value; draft.msg = f.msg.value; draft.from = f.from.value;
-  counter.textContent = `${draft.msg.length}/${f.msg.maxLength}`;
   if (draft.posted) updatePosted(false);
-  if (!paintQueued) {
-    paintQueued = true;
-    requestAnimationFrame(() => { paintQueued = false; paintBack(draft, true); });
-  }
+  placeInk();
 }
-Object.values(f).forEach((el) => {
-  el.addEventListener('input', onInput);
-  el.addEventListener('focus', () => scene?.flipTo('back'));
+Object.values(f).forEach((el) => el.addEventListener('input', onInput));
+f.msg.addEventListener('keydown', (e) => {
+  // stop at the bottom of the writing area instead of spilling past the signature
+  if (e.key === 'Enter' && f.msg.scrollHeight > f.msg.clientHeight + 2) e.preventDefault();
 });
 
 $('#flipBtn').addEventListener('click', () => scene?.toggle());
@@ -133,24 +199,28 @@ function updatePosted(posted) {
   draft.posted = posted;
   shareBox.hidden = !posted;
   postBtn.hidden = posted;
-  if (!posted && draft.card) paintBack(draft, true);
+  if (draft.card) repaint();
 }
 
 postBtn.addEventListener('click', async () => {
   if (!draft.msg.trim()) {
-    f.msg.focus();
-    f.msg.closest('.field').classList.add('nudge');
-    setTimeout(() => f.msg.closest('.field').classList.remove('nudge'), 600);
+    scene?.flipTo('back');
+    hint.textContent = 'Add a few lines first — write right on the card.';
+    hint.classList.add('nudge');
+    setTimeout(() => hint.classList.remove('nudge'), 600);
+    const wait = setInterval(() => { if (inkOn) { clearInterval(wait); f.msg.focus(); } }, 100);
+    setTimeout(() => clearInterval(wait), 3000);
     return;
   }
   postBtn.disabled = true;
+  document.activeElement?.blur?.();
   const wasFront = scene?.side === 'front';
   scene?.flipTo('back');
   draft.date = today();
   const code = await encodeCard({ card: draft.card.id, to: draft.to.trim(), msg: draft.msg.trim(), from: draft.from.trim(), date: draft.date });
   await new Promise((r) => setTimeout(r, wasFront ? 900 : 250));
   draft.posted = true;
-  paintBack(draft, true);
+  repaint();
   scene?.thump();
   linkField.value = shareUrl(code);
   $('#preview').href = shareUrl(code);
@@ -170,6 +240,8 @@ const gifBtn = $('#gifBtn');
 gifBtn.addEventListener('click', async () => {
   if (!scene || gifBtn.disabled) return;
   gifBtn.disabled = true;
+  exporting = true;
+  setInk(false); // bake the writing into the card texture for the recording
   try {
     const blob = await scene.exportGif({
       onProgress: (p) => (gifBtn.textContent = `Making GIF… ${Math.round(p * 100)}%`),
@@ -183,6 +255,7 @@ gifBtn.addEventListener('click', async () => {
     console.error(e);
     gifBtn.textContent = 'Couldn’t make GIF';
   }
+  exporting = false;
   setTimeout(() => { gifBtn.textContent = 'Download GIF'; gifBtn.disabled = false; }, 2200);
 });
 

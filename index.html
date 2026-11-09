@@ -26,27 +26,23 @@
   </main>
 
   <section id="editor" class="screen" hidden>
-    <div class="stage" id="stage"></div>
-    <aside class="panel">
+    <header class="e-head">
       <a class="back-link" href="#">← All cards</a>
-      <p class="card-no" id="cardNo"></p>
-      <h2 id="cardTitle"></h2>
-      <p class="hint">Drag or tap the card to turn it over.</p>
+      <p class="e-title"><span class="card-no" id="cardNo"></span> <span id="cardTitle"></span></p>
+    </header>
 
-      <label class="field">
-        <span>To</span>
-        <input id="to" maxlength="40" autocomplete="off" placeholder="Ammi, Rohan, the whole gang…" />
-      </label>
-      <label class="field">
-        <span>Message <em id="count">0/300</em></span>
-        <textarea id="msg" maxlength="300" rows="5" placeholder="May this year be full of light…"></textarea>
-      </label>
-      <label class="field">
-        <span>From</span>
-        <input id="from" maxlength="40" autocomplete="off" placeholder="Your name" />
-      </label>
+    <div class="stage" id="stage"></div>
 
-      <div class="actions">
+    <!-- sits exactly over the back of the card while you write -->
+    <div class="ink" id="ink" hidden>
+      <textarea id="msg" maxlength="300" spellcheck="false" aria-label="Message" placeholder="Write your wishes here…"></textarea>
+      <label class="sig"><span aria-hidden="true">—</span><input id="from" maxlength="40" autocomplete="off" spellcheck="false" aria-label="From" placeholder="Your name" /></label>
+      <input id="to" maxlength="40" autocomplete="off" spellcheck="false" aria-label="To" placeholder="Someone dear" />
+    </div>
+
+    <footer class="e-foot">
+      <p class="hint" id="hint">Tap the card to turn it over and write on the back.</p>
+      <div class="actions" id="actions">
         <button id="flipBtn" class="btn ghost" type="button">Turn over</button>
         <button id="postBtn" class="btn primary" type="button">Send it <span aria-hidden="true">→</span></button>
       </div>
@@ -62,9 +58,9 @@
           <button id="gifBtn" class="btn ghost small" type="button">Download GIF</button>
           <a id="preview" class="text-link" href="#" target="_blank" rel="noopener">See what they'll see ↗</a>
         </div>
-        <p class="fine">The message lives inside the link itself — nothing is stored anywhere.</p>
+        <p class="fine">The message lives inside the link itself — nothing is stored anywhere. Edit the card to make a new link.</p>
       </div>
-    </aside>
+    </footer>
   </section>
 
   <section id="viewer" class="screen" hidden>

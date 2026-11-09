@@ -170,6 +170,24 @@ export class PostcardScene {
 
   hide() { this.card.visible = false; this.anchor = null; }
 
+  /** The card's box on screen in CSS px (valid when it lies flat at z = 0). */
+  screenRect() {
+    const w = (W * this.sc.x) / this.wpp, h = (H * this.sc.x) / this.wpp;
+    const cx = window.innerWidth / 2 + this.px.x / this.wpp;
+    const cy = window.innerHeight / 2 - this.py.x / this.wpp;
+    return { x: cx - w / 2, y: cy - h / 2, w, h };
+  }
+
+  /** True once the card has come to rest, flat, showing `side`. */
+  settledOn(side) {
+    if (!this.card.visible || this.side !== side) return false;
+    return Math.abs(this.theta.x - this.theta.t) < 0.012 && Math.abs(this.theta.v) < 0.06 &&
+      Math.abs(this.bend.x) < 0.03 && Math.abs(this.twist.x) < 0.02 && Math.abs(this.cup.x) < 0.02 &&
+      Math.abs(this.pz.x) < 0.01 && Math.abs(this.tiltX.x) < 0.004 && Math.abs(this.hoverY) < 0.002 &&
+      Math.abs(this.sc.x - this.sc.t) < 0.004 * this.sc.t &&
+      Math.abs(this.px.x - this.px.t) < 0.004 && Math.abs(this.py.x - this.py.t) < 0.004;
+  }
+
   // ---------- internals ----------
   _resize() {
     const w = window.innerWidth, h = window.innerHeight;
@@ -322,21 +340,22 @@ export class PostcardScene {
       this.cup.step(h);
     }
 
-    this.hoverX += (this.hoverTX - this.hoverX) * Math.min(1, dt * 4);
-    this.hoverY += (this.hoverTY - this.hoverY) * Math.min(1, dt * 4);
+    const calm = this.calm; // writing mode: no parallax or idle sway, so the card sits perfectly flat
+    this.hoverX += ((calm ? 0 : this.hoverTX) - this.hoverX) * Math.min(1, dt * 4);
+    this.hoverY += ((calm ? 0 : this.hoverTY) - this.hoverY) * Math.min(1, dt * 4);
 
     this._deform();
 
     const th = this.theta.x;
     const lift = 0.32 * Math.abs(Math.sin(th)); // a turning card rises off the table
-    const breathe = 0.012 * Math.sin(this.time * 0.9);
+    const breathe = calm ? 0 : 0.012 * Math.sin(this.time * 0.9);
     const s = this.sc.x;
     this.card.scale.setScalar(s);
     this.card.position.set(this.px.x, this.py.x, this.pz.x + lift * s);
     this.card.rotation.set(
       this.tiltX.x + this.hoverX + breathe - 0.05 * Math.sin(th) * Math.sign(this.theta.v || 1),
       th + this.hoverY * Math.cos(th),
-      this.tiltZ.x + 0.006 * Math.sin(this.time * 0.7),
+      this.tiltZ.x + (calm ? 0 : 0.006 * Math.sin(this.time * 0.7)),
       'XYZ'
     );
     // shadow loosens as the card lifts

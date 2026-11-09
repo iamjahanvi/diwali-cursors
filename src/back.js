@@ -163,6 +163,28 @@ function postmark(ctx, cx, cy, date) {
   ctx.restore();
 }
 
+// Where the writing goes on the back, in texture pixels. The on-card inputs use the same numbers.
+export const MSG = { left: 120, right: 1060, top: 210, bottom: 860 };
+export const SIG = { size: 72, baseline: 950 };
+export const TO = { left: 1250, right: 1928, size: 74, baseline: 682 };
+
+let measureCtx;
+/** Largest size (texture px) at which the message fits above the signature line. */
+export function fitMessage(msg, minSize = 0, ctx) {
+  ctx = ctx || (measureCtx ||= document.createElement('canvas').getContext('2d'));
+  const floor = Math.max(36, Math.min(86, Math.ceil(minSize)));
+  let size = 86, lines, lh;
+  for (; size >= floor; size -= 2) {
+    ctx.font = `italic 500 ${size}px ${SERIF}`;
+    lines = wrap(ctx, msg, MSG.right - MSG.left);
+    lh = size * 1.32;
+    if (lines.length * lh <= MSG.bottom - MSG.top) break;
+  }
+  size = Math.max(size, floor);
+  ctx.font = `italic 500 ${size}px ${SERIF}`;
+  return { size, lh: size * 1.32, lines: wrap(ctx, msg, MSG.right - MSG.left) };
+}
+
 export function formatDate(iso) {
   const d = iso ? new Date(iso + 'T12:00:00') : new Date();
   const m = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][d.getMonth()];
@@ -189,35 +211,28 @@ export function drawBack(canvas, s) {
   ctx.beginPath(); ctx.moveTo(DIV, 190); ctx.lineTo(DIV, 1000); ctx.stroke();
 
   // ---- left: message ----
-  const L = 120, R = DIV - 90, TOP = 210, BOTTOM = 990;
   const hasMsg = s.msg && s.msg.trim();
   const msg = hasMsg ? s.msg.trim() : (s.placeholders ? 'Your message will appear here, in ink.' : '');
   const from = s.from && s.from.trim();
-
-  let size = 86, lines, lh;
-  for (; size >= 36; size -= 2) {
+  if (!s.hideText) {
+    const { size, lines, lh } = fitMessage(msg, s.minSize, ctx);
     ctx.font = `italic 500 ${size}px ${SERIF}`;
-    lines = wrap(ctx, msg, R - L);
-    lh = size * 1.32;
-    const sig = from ? lh * 1.9 : 0;
-    if (lines.length * lh + sig <= BOTTOM - TOP) break;
-  }
-  ctx.font = `italic 500 ${size}px ${SERIF}`;
-  ctx.fillStyle = hasMsg ? INK : 'rgba(38,48,79,0.32)';
-  ctx.textAlign = 'left';
-  let y = TOP + size;
-  for (const line of lines) { ctx.fillText(line, L, y); y += lh; }
-  if (from) {
-    ctx.fillStyle = INK;
-    ctx.font = `italic 600 ${Math.round(size * 1.08)}px ${SERIF}`;
-    ctx.textAlign = 'right';
-    ctx.fillText('— ' + from, R, y + lh * 0.55);
+    ctx.fillStyle = hasMsg ? INK : 'rgba(38,48,79,0.32)';
     ctx.textAlign = 'left';
+    let y = MSG.top + size;
+    for (const line of lines) { ctx.fillText(line, MSG.left, y); y += lh; }
+    if (from) {
+      ctx.fillStyle = INK;
+      ctx.font = `italic 600 ${SIG.size}px ${SERIF}`;
+      ctx.textAlign = 'right';
+      ctx.fillText('— ' + from, MSG.right, SIG.baseline);
+      ctx.textAlign = 'left';
+    }
   }
 
   // footer caption
   ctx.fillStyle = MUTED; ctx.font = `500 19px ${SANS}`;
-  spaced(ctx, `${s.card.no}  ·  ${s.card.title.toUpperCase()}`, L, 1070, 3.2);
+  spaced(ctx, `${s.card.no}  ·  ${s.card.title.toUpperCase()}`, MSG.left, 1070, 3.2);
 
   // ---- right: stamp, address ----
   const SW = 236, SH = 286, SX = BACK_W - 120 - SW, SY = 104;
@@ -229,14 +244,16 @@ export function drawBack(canvas, s) {
   ctx.strokeStyle = RULE; ctx.lineWidth = 2.5;
   [700, 812, 924].forEach((ly) => { ctx.beginPath(); ctx.moveTo(AL, ly); ctx.lineTo(AR, ly); ctx.stroke(); });
   const to = s.to && s.to.trim();
-  if (to) {
+  if (s.hideText) {
+    // the live input sits on top of the card while writing
+  } else if (to) {
     ctx.fillStyle = INK;
-    let ts = 74;
+    let ts = TO.size;
     do { ctx.font = `italic 600 ${ts}px ${SERIF}`; ts -= 2; } while (ctx.measureText(to).width > AR - AL - 20 && ts > 30);
-    ctx.fillText(to, AL + 10, 682);
+    ctx.fillText(to, AL + 10, TO.baseline);
   } else if (s.placeholders) {
     ctx.fillStyle = 'rgba(38,48,79,0.28)'; ctx.font = `italic 500 64px ${SERIF}`;
-    ctx.fillText('Someone dear', AL + 10, 682);
+    ctx.fillText('Someone dear', AL + 10, TO.baseline);
   }
 
   if (s.posted) postmark(ctx, SX - 70, SY + 190, formatDate(s.date));
