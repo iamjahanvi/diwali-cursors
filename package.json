@@ -11,6 +11,7 @@
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/instrument-sans": "^5.3.0",
     "@fontsource/parisienne": "^5.3.0",
+    "gifenc": "^1.0.3",
     "three": "^0.187.0"
   },
   "devDependencies": {

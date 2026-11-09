@@ -293,13 +293,18 @@ export class PostcardScene {
     const now = performance.now();
     let dt = Math.min((now - this._last) / 1000, 1 / 20);
     this._last = now;
+    if (this.capturing) return; // a GIF export is driving the simulation
     if (this.paused) dt = 0; // debug: hold the current pose
-    this.time += dt;
     if (!this.card.visible) { this.renderer.render(this.scene, this.camera); return; }
-
     const tgt = this._anchorTarget();
     this.px.t = tgt.x; this.py.t = tgt.y; this.sc.t = tgt.s;
+    this._step(dt);
+    this.renderer.render(this.scene, this.camera);
+  }
 
+  /** Advance the physics by dt seconds and pose the card. */
+  _step(dt) {
+    if (!this.frozenTime) this.time += dt;
     const STEPS = 6, h = dt / STEPS;
     for (let i = 0; i < STEPS; i++) {
       this.theta.step(h);
@@ -336,6 +341,105 @@ export class PostcardScene {
     );
     // shadow loosens as the card lifts
     this.ground.material.opacity = 0.17 - lift * 0.15;
-    this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Record the card turning over and back as an animated GIF.
+   * Runs the same physics at a fixed frame rate into an offscreen target, so it
+   * looks identical to the live card and doesn't depend on how fast the device is.
+   */
+  async exportGif({ width = 600, height = 400, fps = 20, background = '#f1e7d8', onProgress } = {}) {
+    const { GIFEncoder, quantize, applyPalette } = await import('gifenc');
+    const springs = ['theta', 'bend', 'cup', 'twist', 'px', 'py', 'pz', 'sc', 'tiltX', 'tiltZ'];
+    const saved = {
+      s: springs.map((k) => [this[k].x, this[k].v, this[k].t]),
+      hover: [this.hoverX, this.hoverY, this.hoverTX, this.hoverTY],
+      time: this.time, grabY: this.grabY, onFlip: this.onFlip,
+      clear: this.renderer.getClearColor(new THREE.Color()), alpha: this.renderer.getClearAlpha(),
+    };
+    this.capturing = true;
+    this.onFlip = null;
+
+    const SS = 2; // render at 2× and scale down for clean edges
+    const rt = new THREE.WebGLRenderTarget(width * SS, height * SS);
+    rt.texture.colorSpace = THREE.SRGBColorSpace;
+    const cam = new THREE.PerspectiveCamera(FOV, width / height, 0.1, 50);
+    cam.position.set(0, 0, CAM_Z);
+    const viewW = 2 * CAM_Z * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * (width / height);
+    const scale = (viewW * 0.7) / W;
+
+    const big = new Uint8Array(width * SS * height * SS * 4);
+    const bigCanvas = document.createElement('canvas');
+    bigCanvas.width = width * SS; bigCanvas.height = height * SS;
+    const bigCtx = bigCanvas.getContext('2d');
+    const out = document.createElement('canvas');
+    out.width = width; out.height = height;
+    const outCtx = out.getContext('2d', { willReadFrequently: true });
+    outCtx.imageSmoothingQuality = 'high';
+
+    // start face-up and still
+    this.theta.snap(0); this.bend.snap(0); this.cup.snap(0); this.twist.snap(0);
+    this.px.snap(0); this.py.snap(-0.02); this.pz.snap(0); this.sc.snap(scale);
+    this.tiltX.snap(0); this.tiltZ.snap(0);
+    this.hoverX = this.hoverY = this.hoverTX = this.hoverTY = 0;
+    this.time = 0; this.grabY = 0.25;
+    this.frozenTime = true; // no idle 'breathing', so still frames are identical and can be merged
+
+    // timeline (seconds): rest, turn to the message, read, turn back, settle
+    const T_FLIP1 = 0.9, T_FLIP2 = 3.9, T_END = 6.3;
+    const dt = 1 / fps;
+    const total = Math.round(T_END * fps);
+    const gif = GIFEncoder();
+    const delay = Math.round(1000 / fps);
+    let flipped1 = false, flipped2 = false;
+    let prev = null;
+    const flush = () => {
+      if (!prev) return;
+      const palette = quantize(prev.data, 256);
+      gif.writeFrame(applyPalette(prev.data, palette), width, height, { palette, delay: prev.delay, repeat: 0 });
+      prev = null;
+    };
+    const sameish = (a, b) => {
+      let diff = 0;
+      for (let i = 0; i < a.length; i += 16) if (Math.abs(a[i] - b[i]) > 2 && ++diff > 40) return false;
+      return true;
+    };
+
+    try {
+      this.renderer.setClearColor(background, 1);
+      for (let f = 0; f < total; f++) {
+        const t = f * dt;
+        if (!flipped1 && t >= T_FLIP1) { this.flipTo('back'); flipped1 = true; }
+        if (!flipped2 && t >= T_FLIP2) { this.flipTo('front'); flipped2 = true; }
+        this._step(dt);
+        this.renderer.setRenderTarget(rt);
+        this.renderer.render(this.scene, cam);
+        this.renderer.readRenderTargetPixels(rt, 0, 0, width * SS, height * SS, big);
+        bigCtx.putImageData(new ImageData(new Uint8ClampedArray(big.buffer), width * SS, height * SS), 0, 0);
+        // WebGL rows are bottom-up: flip while scaling down
+        outCtx.save(); outCtx.scale(1, -1);
+        outCtx.drawImage(bigCanvas, 0, -height, width, height);
+        outCtx.restore();
+        const { data } = outCtx.getImageData(0, 0, width, height);
+        // hold still frames longer instead of repeating them — much smaller file
+        if (prev && sameish(prev.data, data)) { prev.delay += delay; }
+        else { flush(); prev = { data: data.slice(), delay }; }
+        if (f % 6 === 0) { onProgress?.(f / total); await new Promise((r) => setTimeout(r)); }
+      }
+      flush();
+      gif.finish();
+      onProgress?.(1);
+      return new Blob([gif.bytes()], { type: 'image/gif' });
+    } finally {
+      this.renderer.setRenderTarget(null);
+      this.renderer.setClearColor(saved.clear, saved.alpha);
+      rt.dispose();
+      springs.forEach((k, i) => { [this[k].x, this[k].v, this[k].t] = saved.s[i]; });
+      [this.hoverX, this.hoverY, this.hoverTX, this.hoverTY] = saved.hover;
+      this.time = saved.time; this.grabY = saved.grabY; this.onFlip = saved.onFlip;
+      this.frozenTime = false;
+      this.capturing = false;
+      this._last = performance.now();
+    }
   }
 }

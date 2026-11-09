@@ -166,6 +166,26 @@ $('#copyBtn').addEventListener('click', async () => {
   setTimeout(() => (btn.textContent = 'Copy link'), 1600);
 });
 
+const gifBtn = $('#gifBtn');
+gifBtn.addEventListener('click', async () => {
+  if (!scene || gifBtn.disabled) return;
+  gifBtn.disabled = true;
+  try {
+    const blob = await scene.exportGif({
+      onProgress: (p) => (gifBtn.textContent = `Making GIF… ${Math.round(p * 100)}%`),
+    });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: `diwali-postcard-${draft.card.id}.gif` });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    gifBtn.textContent = 'Downloaded ✓';
+  } catch (e) {
+    console.error(e);
+    gifBtn.textContent = 'Couldn’t make GIF';
+  }
+  setTimeout(() => { gifBtn.textContent = 'Download GIF'; gifBtn.disabled = false; }, 2200);
+});
+
 const shareBtn = $('#shareBtn');
 if (navigator.share) {
   shareBtn.hidden = false;
