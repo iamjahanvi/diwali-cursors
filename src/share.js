@@ -34,4 +34,4 @@ export async function decodeCard(code) {
   return { card: o.c, to: o.t || '', msg: o.m || '', from: o.f || '', date: o.d };
 }
 
-export const shareUrl = (code) => `${location.origin}/#p=${code}`;
+export const shareUrl = (code) => `${location.origin}${location.pathname}#p=${code}`;

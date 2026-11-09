@@ -1,1 +1,1 @@
-export default { build: { chunkSizeWarningLimit: 900 } };
+export default { base: './', build: { chunkSizeWarningLimit: 900 } };

@@ -19,8 +19,8 @@ export const CARDS = [
 ].map((c, i) => ({
   ...c,
   no: String(i + 1).padStart(2, '0'),
-  full: `/cards/${c.id}.webp`,
-  thumb: `/cards/${c.id}-t.webp`,
+  full: `cards/${c.id}.webp`,
+  thumb: `cards/${c.id}-t.webp`,
 }));
 
 export const byId = (id) => CARDS.find((c) => c.id === id);
