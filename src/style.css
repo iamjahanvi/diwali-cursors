@@ -59,7 +59,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 
 .grid {
   list-style: none; padding: 0; margin: 0;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(28px, 4vw, 52px) clamp(20px, 3vw, 40px);
 }
 .pc { display: block; text-decoration: none; color: inherit; outline: none; }
@@ -190,6 +190,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 
 /* ---------------- small screens ---------------- */
 @media (max-width: 860px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #editor { display: block; }
   #editor .stage { height: 42svh; position: sticky; top: 0; z-index: 0; }
   .panel {
