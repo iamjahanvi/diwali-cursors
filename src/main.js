@@ -236,6 +236,21 @@ $('#copyBtn').addEventListener('click', async () => {
   setTimeout(() => (btn.textContent = 'Copy link'), 1600);
 });
 
+// Inside claude.ai the page runs sandboxed and must ask the host to save files;
+// everywhere else (e.g. on Vercel) a normal link download works.
+async function saveFile(blob, filename) {
+  const downloads = window.claude?.use ? await window.claude.use('downloads').catch(() => null) : null;
+  if (downloads) {
+    try { await downloads.save({ filename, data: blob }); return true; }
+    catch (e) { if (e?.code === 'declined') return false; console.warn('host save failed', e); }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  return true;
+}
+
 const gifBtn = $('#gifBtn');
 gifBtn.addEventListener('click', async () => {
   if (!scene || gifBtn.disabled) return;
@@ -246,11 +261,9 @@ gifBtn.addEventListener('click', async () => {
     const blob = await scene.exportGif({
       onProgress: (p) => (gifBtn.textContent = `Making GIF… ${Math.round(p * 100)}%`),
     });
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: `diwali-postcard-${draft.card.id}.gif` });
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-    gifBtn.textContent = 'Downloaded ✓';
+    gifBtn.textContent = 'Saving…';
+    const ok = await saveFile(blob, `diwali-postcard-${draft.card.id}.gif`);
+    gifBtn.textContent = ok ? 'Downloaded ✓' : 'Download cancelled';
   } catch (e) {
     console.error(e);
     gifBtn.textContent = 'Couldn’t make GIF';
