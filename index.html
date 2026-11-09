@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Diwali Post — send a little light</title>
+  <meta name="description" content="Pick an illustrated Diwali postcard, write a few lines on the back, and send it with a link." />
+  <meta name="theme-color" content="#f3eadc" />
+  <meta property="og:title" content="You've got a Diwali postcard ✦" />
+  <meta property="og:description" content="Open it to turn it over and read the note on the back." />
+  <meta property="og:image" content="/og.jpg" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body data-screen="gallery">
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <main id="gallery" class="screen">
+    <header class="masthead">
+      <p class="eyebrow">Diwali Post <span>✦</span> Sixteen cards</p>
+      <h1>Send a little <em>light.</em></h1>
+      <p class="lede">Pick a postcard, write a few lines on the back, and post it to someone with a link.</p>
+    </header>
+    <ol class="grid" id="grid"></ol>
+    <footer class="foot">Shubh Deepavali <span>✦</span></footer>
+  </main>
+
+  <section id="editor" class="screen" hidden>
+    <div class="stage" id="stage"></div>
+    <aside class="panel">
+      <a class="back-link" href="#">← All cards</a>
+      <p class="card-no" id="cardNo"></p>
+      <h2 id="cardTitle"></h2>
+      <p class="hint">Drag or tap the card to turn it over.</p>
+
+      <label class="field">
+        <span>To</span>
+        <input id="to" maxlength="40" autocomplete="off" placeholder="Ammi, Rohan, the whole gang…" />
+      </label>
+      <label class="field">
+        <span>Message <em id="count">0/300</em></span>
+        <textarea id="msg" maxlength="300" rows="5" placeholder="May this year be full of light…"></textarea>
+      </label>
+      <label class="field">
+        <span>From</span>
+        <input id="from" maxlength="40" autocomplete="off" placeholder="Your name" />
+      </label>
+
+      <div class="actions">
+        <button id="flipBtn" class="btn ghost" type="button">Turn over</button>
+        <button id="postBtn" class="btn primary" type="button">Post it <span aria-hidden="true">→</span></button>
+      </div>
+
+      <div id="shareBox" class="share" hidden>
+        <p class="share-title">Posted. Here's your postcard's link.</p>
+        <div class="link-row">
+          <input id="link" readonly aria-label="Shareable link" />
+          <button id="copyBtn" class="btn primary small" type="button">Copy link</button>
+        </div>
+        <div class="share-row">
+          <button id="shareBtn" class="btn ghost small" type="button" hidden>Share…</button>
+          <a id="preview" class="text-link" href="#" target="_blank" rel="noopener">See what they'll see ↗</a>
+        </div>
+        <p class="fine">The message lives inside the link itself — nothing is stored anywhere.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section id="viewer" class="screen" hidden>
+    <header class="v-head">
+      <p class="eyebrow">Diwali Post <span>✦</span></p>
+      <h1 id="fromLine"></h1>
+      <p id="toLine" class="v-to"></p>
+    </header>
+    <div class="stage" id="vstage"></div>
+    <footer class="v-foot">
+      <p class="hint">Tap or drag the card to turn it over</p>
+      <a class="btn primary" href="#">Send one back <span aria-hidden="true">→</span></a>
+    </footer>
+    <div class="lost-note">
+      <h1>This postcard got lost in the post.</h1>
+      <p>The link looks incomplete. Ask the sender to copy it again.</p>
+      <a class="btn primary" href="#">Send a postcard →</a>
+    </div>
+  </section>
+
+  <p class="no-gl-note">Your browser can't show 3D here. Try a recent Chrome, Safari or Firefox.</p>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
