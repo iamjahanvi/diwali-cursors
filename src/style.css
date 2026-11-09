@@ -50,8 +50,6 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
   display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end;
   gap: 24px clamp(32px, 6vw, 96px);
   margin: 0 0 clamp(56px, 7vw, 96px);
-  padding-bottom: clamp(28px, 3.5vw, 44px);
-  border-bottom: 1px solid var(--rule);
 }
 .masthead h1 {
   font: 700 clamp(52px, 8vw, 112px)/0.92 var(--serif); letter-spacing: -0.03em; margin: 0;
