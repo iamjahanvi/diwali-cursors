@@ -85,7 +85,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 }
 .pc-no {
   font: 600 10px/1 var(--sans); font-style: normal; letter-spacing: .22em; text-transform: uppercase;
-  color: var(--muted); margin-right: .7em; vertical-align: 2px;
+  color: var(--muted); display: block; margin: 0 0 7px;
 }
 .foot {
   text-align: center; margin-top: 80px;
@@ -206,7 +206,6 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 @media (max-width: 520px) {
   .grid { grid-template-columns: 1fr 1fr; gap: 26px 14px; }
   .pc-cap { font-size: 16px; margin-top: 10px; }
-  .pc-no { display: block; margin: 0 0 5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pc-frame, .btn { transition: none; }
