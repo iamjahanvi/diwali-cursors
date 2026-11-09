@@ -49,7 +49,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 .masthead {
   display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end;
   gap: 24px clamp(32px, 6vw, 96px);
-  margin: 0 0 clamp(56px, 7vw, 96px);
+  margin: 0 0 clamp(80px, 11vw, 160px);
 }
 .masthead h1 {
   font: 400 clamp(52px, 7.6vw, 108px)/1.05 "Parisienne", var(--serif); letter-spacing: 0; margin: 0;
