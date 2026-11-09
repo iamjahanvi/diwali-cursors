@@ -54,7 +54,7 @@ body:not([data-screen="gallery"]) #gl { pointer-events: auto; }
 .masthead h1 {
   font: 700 clamp(42px, 6vw, 84px)/1.08 "Shippori Mincho B1", var(--serif); letter-spacing: -0.045em; margin: 0;
 }
-.masthead h1 em { font-style: normal; color: var(--accent); }
+.masthead h1 em { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 1.12em; letter-spacing: -0.02em; color: var(--accent); }
 .lede {
   font: 500 clamp(17px, 1.5vw, 20px)/1.45 var(--serif); color: var(--muted);
   margin: 0 0 0.5em; max-width: 46ch; justify-self: end; text-align: right; text-wrap: balance;
